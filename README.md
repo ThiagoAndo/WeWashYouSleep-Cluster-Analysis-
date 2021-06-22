@@ -1,12 +1,12 @@
  Finding the Best Investment
 =========================
 
-### Cluster Analysis
+## Cluster Analysis
 
 
-<center>
-![cost-of-health](images/invest-Money.jpg)
-</center>
+
+![](images/invest-Money.jpg)
+
 
 
 #Introduction
