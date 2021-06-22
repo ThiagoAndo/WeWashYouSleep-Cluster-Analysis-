@@ -9,7 +9,7 @@
 
 
 
-#Introduction
+## Introduction
 
 WeWashYouSleep is a ralatively small company and
 they cannot compete with the big players in the major cities. The company's strategy is to 
