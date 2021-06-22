@@ -1,0 +1,84 @@
+#TOC {
+  color: #708090;
+  font-family: Calibri, Helvetica, sans-serif;
+  font-size: 16px; 
+  border-color: #708090;
+}
+
+h1.title {
+  color:black;
+  background-color: #F5F5F5;
+  opacity: 0.6;
+  font-family: Calibri, Helvetica, sans-serif;
+  font-size: 45px;
+  font-weight: bold
+}
+
+pre {
+  color: #708090;
+  background-color: #F8F8FF;
+}
+
+
+
+img {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+ }
+
+img:hover {
+  box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+
+
+
+h4.author {
+  color: black;
+  font-family: Calibri, Helvetica, sans-serif;
+  background-color: #F5F5F5;
+}
+
+h4.date {
+  color: black;  
+  font-family: Calibri, Helvetica, sans-serif;
+}
+
+
+body {
+  color: black;
+  font-family: Calibri, Helvetica, sans-serif;
+  background-color: #F5F5F5;
+  font-size: 20px; 
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+
+
+
+table {
+  font-family: Calibri, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+ td, th {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 20px;
+}
+
+ tr:nth-child(even){background-color: white;}
+
+ tr:hover {background-color: #ddd;}
+
+ th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+
+/*re = code background, TOC = caixa de seleção */

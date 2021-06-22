@@ -1,0 +1,351 @@
+---
+title: "Finding the Best Investment"
+subtitle: 'Cluster Analysis'
+author: "Thiago Ando de Freitas"
+date: " Last edited `r format(Sys.Date(), '%d %B, %Y')`"
+output: 
+ html_document:
+    css: "style.css" 
+    code_folding: hide
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+      toc_depth: 1
+---
+```{r setup, include = FALSE}
+# This will setup parameters for all chunks on the script
+# knitr::opts_chunk$set(fig.align = 'center', out.width = '80%',, echo = TRUE)
+
+knitr::opts_chunk$set(fig.align = 'center', echo = TRUE)
+```
+
+```{r, warning= FALSE, message= FALSE}
+
+library(rio)         # dloading data
+
+library(dplyr)       # data manipulation
+
+library(ggplot2)     # visualization
+
+library(factoextra)  # visualization
+
+files <- dir("data", full = T)
+
+
+if(length(files)==0 ){
+warning("FIRST YOU MUST CREATE A NEW R PROJEC THEN COPY THE FILES DOWNLOADED FROM GIT HUB 
+        AND PASTE ALL INTO THE NEW PROJECT FOLDER") }
+
+stores <- import(files[1], which = 1)%>%janitor::clean_names()
+
+```
+
+
+
+<center>
+![cost-of-health](images/invest-Money.jpg)
+</center>
+
+
+#Introduction
+
+WeWashYouSleep is a ralatively small company and
+they cannot compete with the big players in the major cities. The company's strategy is to 
+build a vast network in the smaller 
+cityes. 
+
+WeWashYouSleep alredy had a strong presence in 140 locations and recently oppened stores in
+10 new cityes. Additionally, the
+company has two separate sales regions.
+
+You have been assigned for analytics task;
+
+Indentify which of the 10 new locations have the best potential for the company to invest
+more funds into markenting.
+
+
+--------------------------------------------------------------------------------------------
+
+#The Data
+
+The Dataset has been taken from [superdatascience](https://www.superdatascience.com/pages/tableau) this dataset contains `r ncol(stores)` attributes. It has a total number of `r nrow(stores)` rows. 
+
+
+
+### Attributes:
+
+* store_id: Unique identifier of the store
+
+* state: State of the established store
+
+* city: City of the established store
+
+* sales_region: Region  Sales 
+
+* new_expansion: Indicates whether the store is Old or New  
+
+* marketing_spend: Amount invested in marketing per store
+
+* revenue: Amount of revenue per store
+
+
+
+# Data cleaning and pre-processing
+
+There were no duplicated entries in the dataset and no missing values the functions below 
+gives a summary of these:
+```{r}
+paste0("There are ",sum(duplicated(stores)), " duplicated observations") 
+```
+</br>
+
+
+```{r}
+#Checking for missing values 
+visdat::vis_miss(stores)
+```
+</br>
+
+
+
+
+#Data Analysis
+
+```{r, warning= FALSE}
+skimr::skim(stores)
+```
+</br>
+
+
+```{r, warning= FALSE, message= FALSE,fig.cap = 'Figure 1.0'}
+
+ggplot(stores, aes(marketing_spend, revenue))+ 
+   geom_point(size = 4, alpha= 0.6)+
+   theme_minimal()  +
+   scale_x_continuous(labels = scales::dollar) +
+   scale_y_continuous(labels = scales::dollar) +
+   ggtitle("Marketing Spend vs Revenue")+
+   theme(
+      axis.text.x=element_text( color="black"),
+      plot.title = element_text(size = 17),
+      strip.text.x = element_text(size = 14))
+
+```
+
+Straightforward We can verify the existence of two clusters in this image. The first cluster
+has a weak, positive, linear association between the two variables in which the market investment does not seem to raise the amount of revenue to the company. The other one has a 
+moderately strong, positive, linear association between the two variables in which the market investment 
+seems to raise the amount of revenue to the company.
+</br></br>
+
+ 
+ 
+# Unsupervised Learning 
+
+Algorithm           | Description
+--------------------|-------------
+K Means             | Clustering  
+
+</br>
+
+
+Let's apply the K Means algorithm and visualize it to see whether it will separate the clusters that we were able to identify in figure 1.0.
+```{r, warning= FALSE, message= FALSE,fig.cap = 'Figure 2.0'}
+
+# Lets check if the algorithm kmeans can indentify these clusters 
+k_means_data <- stores %>%
+                   select(revenue, marketing_spend)
+
+set.seed(111)
+
+# Set k equal to the optimal number of clusters
+num_clusters <- 2
+
+# Run the k-means algorithm 
+k_means <- kmeans(k_means_data, num_clusters, iter.max = 15, nstart = 25)
+
+
+stores <- stores %>%
+   mutate( k_means_cluster = k_means$cluster)  
+ggplot(stores, aes(marketing_spend, revenue, color = as.factor(k_means_cluster)))+ 
+   geom_point(size = 4, alpha= 0.6) +
+   geom_smooth(method = "lm",se = F)+
+   theme_minimal()+
+   scale_x_continuous(labels = scales::dollar) +
+   scale_y_continuous(labels = scales::dollar) +
+   scale_color_manual(name="Clusters",values=c("#EC2C73","#29AEC7")) +
+   ggtitle('Clusters by Marketing Spend vs Revenue')+
+   ylab("Revenue") +
+   xlab("Marketing Spend") 
+```
+
+The algorithm separated the dataset into two clusters very well. The only problem is that for some reason, it assigned some stores in cluster two that appear to belong to cluster one.
+
+--------------------------------------------------------------------------------------------
+
+# Adding Population to the Dataset
+
+I decided to bring one more dataset for this analysis. The US-Cities-Population dataset contains the amount of population from these cities. As you can imagine. The volume of work that they get is directly proportionate to the number of people that they can potentially service.
+
+For a laundry company, the more people you have exactly proportionately, the more you will have dirty laundry in that city. So the population of a city might play a huge role in the
+analysis that we are about to perform.
+
+Let's join these two datasets:
+
+```{r}
+pop <- read.csv(files[2])%>%
+                 janitor::clean_names()%>%
+                  select(city,state,x2015_estimate)
+
+paste0("There are ", stores%>% nrow, " rows in the datase before the join")
+
+company_pop <- stores %>% 
+   inner_join(pop, by = c("city", "state"))
+
+paste0("There are ", company_pop %>% nrow , " rows in the datase after the join")
+
+```
+
+It is fundamental to check the number of rows after and before joining two datasets. We do not want to end up with fewer or duplicate observations in the dataset.
+</br>
+
+
+# Finding the Number of Clusters
+
+Great! Now that we have a more informative dataset, let's begin our clustering analysis by
+determining how many clusters we should be modeling. The best number of clusters is not always a clear-cut answer, but fortunately there are several
+techniques to help us optimize. We'll work with two different methods to compare 
+recommendations:
+   
+* Elbow Method
+
+* Silhouette Method
+
+First up will be the Elbow Method. This method plots the percent variance against the number
+of clusters. The "elbow" bend of the curve indicates the optimal point at which adding more 
+clusters will no longer explain a significant amount of the variance
+
+
+```{r, warning= FALSE, message= FALSE,fig.cap = 'Figure 3.0'}
+
+k_means_data <- company_pop %>%
+   select(revenue, marketing_spend,x2015_estimate)
+
+
+fviz_nbclust(k_means_data, kmeans, method = "wss")
+```
+It appears that we have a third cluster now. Let's see if we can confirm this result by checking the recommendation from the Silhouette method.
+
+</br>
+
+
+
+
+The silhouette method:
+The Silhouette Method will evaluate the quality of clusters by how well each point fits within a cluster, maximizing average "silhouette" width.
+```{r, warning= FALSE, message= FALSE,fig.cap = 'Figure 4.0'}
+# Run the fviz_nbclust function with the method "silhouette" 
+fviz_nbclust(k_means_data, kmeans,method = "silhouette")
+```
+Great, now we have the confirmation of the existence of three clusters.
+</br></br>
+
+ Now, let's run K means algorithm again and get to know the third cluster in our dataset
+
+```{r, warning= FALSE, message= FALSE,fig.cap = 'Figure 5.0'}
+
+
+set.seed(111)
+
+# Set k equal to the optimal number of clusters
+num_clusters <- 3
+
+# Run the k-means algorithm 
+k_means <- kmeans(k_means_data, num_clusters, iter.max = 5, nstart = 25)
+
+
+company_pop <- company_pop %>%
+   mutate( k_means_cluster = k_means$cluster)  
+
+
+ggplot(company_pop, aes(marketing_spend, revenue, color = as.factor(k_means_cluster) ))+ 
+   geom_point(size = 4, alpha= 0.6) +
+   geom_smooth(method = "lm",se = F)+
+   theme_minimal()  +
+   scale_x_continuous(labels = scales::dollar) +
+   scale_y_continuous(labels = scales::dollar) +
+   scale_color_manual(name="Clusters",values=c("#EC2C73","#29AEC7", 
+                                               "#FFDD30")) +
+   ggtitle('Clusters by Marketing Spend vs Revenue')+
+   ylab("Revenue") +
+   xlab("Marketing Spend") 
+```
+
+Here it is. The k means algorithm was able to identify this third cluster (1) that has the strongest relationship between the two variables. Therefore the new stores that are in these cities would be the good ones to invest in marketing.
+
+
+
+
+
+```{r, warning= FALSE, message= FALSE,}
+company_pop <- company_pop %>%
+   mutate(k_means_cluster = as.factor(
+      ifelse(revenue >27000 & k_means_cluster == 2, 1,k_means_cluster )))
+
+
+
+company_pop %>%
+    group_by(k_means_cluster)%>%
+    summarise(pop_mean = mean(x2015_estimate))
+```
+Here we can see the mean proportion of the population for each cluster.
+
+
+
+
+
+```{r}
+lm( revenue ~ marketing_spend, company_pop %>% filter(k_means_cluster == 1))
+```
+For the stores situated in the cities that make part of the cluster one, the least square 
+regression predicts for each dollar invested in marketing it is predicted to have a return of $7.31
+
+
+
+```{r}
+lm( revenue ~ marketing_spend, company_pop %>% filter(k_means_cluster == 2))
+```
+
+For the stores situated in the cities that make part of the cluster two, the least square 
+regression predicts for each dollar invested in marketing it is predicted to have a return of $0.94
+
+```{r}
+lm( revenue ~ marketing_spend, company_pop %>% filter(k_means_cluster == 3))
+```
+
+For the stores situated in the cities that make part of the cluster three, the least square regression predicts for each dollar invested in marketing it is predicted to have a return of $3.17
+
+
+
+
+# Showing the Best Stores to Invest in Marketing
+
+```{r, warning= FALSE, message= FALSE,fig.cap = 'Figure 5.0'}
+company_pop %>%
+   filter(k_means_cluster == 1 & new_expansion == "New")%>%
+   mutate(`Return per dollar invested` = round(revenue /marketing_spend,2))%>%
+   select(city,`Return per dollar invested`)%>%
+   ggplot(aes(city,`Return per dollar invested`))+
+   scale_y_continuous(labels = scales::dollar) +
+   geom_col() +
+   theme_minimal()+
+   ggtitle('Best Stores to invest in Marketing')+
+   xlab("City")  
+```
+
+
+Those are the new stores in which the investment in marketing has generate more revenue for the company. Now it is time to present the finds to the CEO of the company. And let him with, his domain knowledge, choose three out of these four stores to invest in marketing.
+</br>
+
+You can find the code used in this article in the [Github Repository](https://github.com/ThiagoAndo/WeWashYouSleep-Cluster-Analysis-). **Right-click on the link and choose (open in a New Window).**
