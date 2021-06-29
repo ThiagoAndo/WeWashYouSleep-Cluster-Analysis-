@@ -39,4 +39,4 @@ K Means             | Clustering
 
 
 
-You can find the detailed article in markdown format in the [RPubs](https://rpubs.com/AndoFreitas)
+# You can find the detailed script in markdown format in the [RPubs](https://rpubs.com/AndoFreitas)
